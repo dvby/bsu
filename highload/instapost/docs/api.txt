@@ -1,0 +1,78 @@
+Instapost API
+
+Приложение позволяет пользователям хранить посты размеченные как markdown.
+Будет использоваться REST API, поскольку по задумке здесь нужны операции CRUD
+Воможные операции:
+
+1. Добавить пользователя
+
+     /
+     POST
+     ContentType json
+     {
+          name :
+     }
+
+     return Location url : String
+
+2. Получить посты (страничку) пользователя
+
+     /{id}
+     GET
+     ContentType json
+     {
+          name : String,
+          posts : [ { id : String, url : String } ]
+     }
+
+2'. Удалить пользователя
+     /{id}
+     DELETE
+
+3. Добавить пост пользователю
+
+     /{id}
+     POST
+     ContentType json
+     {
+          title : String
+          content : String (text/markdown)
+          author id : String
+     }
+
+     return ContentType json
+     {
+          id : String
+          url : String
+     }
+
+4. Получить  пост
+
+     /post/{id}
+     GET
+     ContentType json
+     {
+          id : String
+          title : String
+          content : String (text/markdown)
+          date : String(ISO_8601)
+          url : String
+          author name : String
+          author url :  String
+     }
+4'. DELETE /post/{id}
+
+5.  Изменить пост
+
+     /post/{id}
+     PUT
+     ContentType json
+     {
+          title : String
+          content : String (text/markdown)
+     }
+
+Отклонения от REST-принципов:
+
+- json - это не self-descriptive. Но форматы данных слишком разнятся и не слишком общераспространены для использования существующих модификаций json. Описывать свои спецификации типов, казалось бы, можно, но едва ли в этом есть смысл, поскольку они слишком специфичны для приложений
+- никакого hypermedia - ведь важно, по крайней мере, чтобы была не одна точка входа. Потому что должна быть возможность свободного обмена ссылками на посты и на пользователей, и эти ссылки должны быть перманентными.
