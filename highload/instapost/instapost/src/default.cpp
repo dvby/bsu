@@ -23,8 +23,13 @@ public:
     virtual void onUnload() {
     }
     virtual void handleRequest(fastcgi::Request *request, fastcgi::HandlerContext *context) {
-        request->setContentType("text/plain");
-        std::stringbuf buffer("default\n");
+        std::string body;
+
+        fastcgi::DataBuffer bodyBuffer = request->requestBody();
+        bodyBuffer.toString(body);
+
+        std::stringbuf buffer(body);
+        request->setContentType("application/json");
         request->write(&buffer);
     }
 };

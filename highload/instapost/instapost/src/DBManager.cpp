@@ -23,18 +23,14 @@ boost::thread_specific_ptr<mongocxx::client> DBManager::clientPtr;
 //////// POST ////////
 //////////////////////
 
-Post DBManager::CreatePost(const std::string& authorId, const std::string& post) {
-    auto postView = bsoncxx::from_json(post).view();
-    auto title = postView["title"].get_utf8().value.to_string();
-    auto content = postView["content"].get_utf8().value.to_string();
-
+Post DBManager::CreatePost(const std::string& authorId, const std::string& body) {
+    auto post = bsoncxx::from_json(body);
     auto id = bsoncxx::oid().to_string();
 
     auto docValue = document{}
         << "_id" << id
         << "author" << authorId
-        << "title" << title
-        << "content" << content
+        << bsoncxx::builder::concatenate_doc{ post.view() }
         << finalize;
 
     auto& conn = getClient();
@@ -43,10 +39,10 @@ Post DBManager::CreatePost(const std::string& authorId, const std::string& post)
     for (size_t i = 0; i < MAX_RETRIES; ++i) {
         auto maybeInserted = collection.insert_one(docValue.view());
         if (maybeInserted) {
-            return Post(id, authorId, title, content);
+            return ReadPost(id);
         }
     }
-    throw std::string("Cannot delete post, possibly wrong id");
+    throw std::string("Cannot insert post");
 }
 
 Post DBManager::ReadPost(const std::string& id) {
@@ -61,27 +57,23 @@ Post DBManager::ReadPost(const std::string& id) {
         auto content = view["content"].get_utf8().value.to_string();
         return Post(id, authorId, title, content);
     }
-    throw std::string("Cannot delete post, possibly wrong id");
+    throw std::string("Cannot read post, possibly wrong id");
 }
 
-Post DBManager::UpdatePost(const std::string& id, const std::string& post) {
-    auto postView = bsoncxx::from_json(post).view();
-    auto authorId = postView["author"].get_utf8().value.to_string();
-    auto title = postView["title"].get_utf8().value.to_string();
-    auto content = postView["content"].get_utf8().value.to_string();
+Post DBManager::UpdatePost(const std::string& id, const std::string& body) {
+    auto post = bsoncxx::from_json(body);
 
     auto& conn = getClient();
     auto collection = conn[DBNAME][POSTS_COLLECTION_NAME];
 
     auto result = collection.update_one(document{} << "_id" << id << finalize,
-                                        document{} << "$set" << open_document <<
-                                        "title" << title <<
-                                        "content" << content <<
-                                        close_document << finalize);
+                                        document{} << "$set" << open_document
+                                        << bsoncxx::builder::concatenate_doc{ post.view() }
+                                        << close_document << finalize);
     if (result) {
-        return Post(id, authorId, title, content);
+        return ReadPost(id);
     }
-    throw std::string("Cannot delete post, possibly wrong id");
+    throw std::string("Cannot update post, possibly wrong id");
 }
 
 void DBManager::DeletePost(const std::string& id) {
@@ -98,15 +90,14 @@ void DBManager::DeletePost(const std::string& id) {
 //////// USER ////////
 //////////////////////
 
-User DBManager::CreateUser(const std::string& user) {
-    auto userView = bsoncxx::from_json(user).view();
-    auto name = userView["name"].get_utf8().value.to_string();
+User DBManager::CreateUser(const std::string& body) {
+    auto user = bsoncxx::from_json(body);
 
     auto id = bsoncxx::oid().to_string();
 
     auto docValue = document{}
         << "_id" << id
-        << "name" << name
+        << bsoncxx::builder::concatenate_doc{ user.view() }
         << finalize;
 
     auto& conn = getClient();
@@ -115,10 +106,10 @@ User DBManager::CreateUser(const std::string& user) {
     for (size_t i = 0; i < MAX_RETRIES; ++i) {
         auto maybeInserted = collection.insert_one(docValue.view());
         if (maybeInserted) {
-            return User(id, name);
+            return ReadUser(id);
         }
     }
-    throw std::string("Cannot delete post, possibly wrong id");
+    throw std::string("Cannot insert user");
 }
 
 User DBManager::ReadUser(const std::string& id) {
@@ -141,24 +132,23 @@ User DBManager::ReadUser(const std::string& id) {
 
         return User(id, name, posts);
     }
-    throw std::string("Cannot delete post, possibly wrong id");
+    throw std::string("Cannot read user, possibly wrong id");
 }
 
-User DBManager::UpdateUser(const std::string& id, const std::string& user) {
-    auto userView = bsoncxx::from_json(user).view();
-    auto name = userView["name"].get_utf8().value.to_string();
+User DBManager::UpdateUser(const std::string& id, const std::string& body) {
+    auto user = bsoncxx::from_json(body);
 
     auto& conn = getClient();
     auto collection = conn[DBNAME][USERS_COLLECTION_NAME];
 
     auto result = collection.update_one(document{} << "_id" << id << finalize,
-                                        document{} << "$set" << open_document <<
-                                        "name" << name <<
-                                        close_document << finalize);
+                                        document{} << "$set" << open_document
+                                        << bsoncxx::builder::concatenate_doc{ user.view() }
+                                        << close_document << finalize);
     if (result) {
-        return User(id, name);
+        return ReadUser(id);
     }
-    throw std::string("Cannot delete post, possibly wrong id");
+    throw std::string("Cannot update user, possibly wrong id");
 }
 
 void DBManager::DeleteUser(const std::string& id) {
@@ -167,6 +157,6 @@ void DBManager::DeleteUser(const std::string& id) {
 
     auto result = collection.delete_one(document{} << "_id" << id << finalize);
     if (!result) {
-        throw std::string("Cannot delete post, possibly wrong id");
+        throw std::string("Cannot delete user, possibly wrong id");
     }
 }

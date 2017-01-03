@@ -1,6 +1,18 @@
 server {
   listen 80;
 
+  location /post/ {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
+    fastcgi_pass unix:/tmp/fastcgi_daemon.sock;
+  }
+
+  location /user/ {
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;
+    fastcgi_pass unix:/tmp/fastcgi_daemon.sock;
+  }
+
   location / {
     include fastcgi_params;
     fastcgi_param SCRIPT_FILENAME $fastcgi_script_name;

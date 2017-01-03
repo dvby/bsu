@@ -6,7 +6,7 @@ Instapost API
 
 1. Добавить пользователя
 
-     /
+     /user/
      POST
      ContentType json
      {
@@ -17,7 +17,7 @@ Instapost API
 
 2. Получить посты (страничку) пользователя
 
-     /{id}
+     /user/{id}
      GET
      ContentType json
      {
@@ -26,12 +26,12 @@ Instapost API
      }
 
 2'. Удалить пользователя
-     /{id}
+     /user/{id}
      DELETE
 
 3. Добавить пост пользователю
 
-     /{id}
+     /user/{id}
      POST
      ContentType json
      {

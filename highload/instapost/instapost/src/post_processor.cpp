@@ -71,12 +71,6 @@ private:
 
     void handlePUT(fastcgi::Request *request, fastcgi::HandlerContext *context) {
         std::string id = getId(request);
-        // Post post = db.ReadPost(id);
-
-        //TODO
-        // post.Title = request->hasArg("title") ? request->getArg("title") : post.Title;
-        //TODO
-        // post.Content = request->hasArg("content") ? request->getArg("content") : post.Content;
 
         std::string post;
         fastcgi::DataBuffer bodyBuffer = request->requestBody();
